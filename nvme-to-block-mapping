@@ -1,3 +1,4 @@
+#!/bin/bash
 non_ebs_mapping=("/dev/sdb1" "/dev/sdc1" "/dev/sdd1" "/dev/sde1" "/dev/sdf1" "/dev/sdg1")
 
 #알파벳 숫자 즉 26번 반복 (적게 해도 무관하다)
