@@ -1,0 +1,34 @@
+non_ebs_mapping=("/dev/sdb1" "/dev/sdc1" "/dev/sdd1" "/dev/sde1" "/dev/sdf1" "/dev/sdg1")
+
+#알파벳 숫자 즉 26번 반복 (적게 해도 무관하다)
+for i in `seq 0 26`; do
+    nvme_block_device="/dev/nvme${i}n1"
+
+    # nvme*n1중 존재하는 블럭만 조건문 실행
+    if [ -e  $nvme_block_device ]; then
+
+        # ebs 정보를 통해 블럭디바이스 이름과 매핑한다.
+        mapping_device=$(/usr/sbin/ebsnvme-id ${nvme_block_device} --block-dev)
+
+        # EBS만 걸러내야 한다. 즉 non_ebs_mapping를 사용해 걸러준다.
+        if [[ -z "$mapping_device" ]]; then
+            mapping_device="${non_ebs_mapping[$i]}"
+        fi
+
+        # 간혹 /dev/sde 와같은 형식이 아닌 /sde와 같은 형식으로 나오는 경우 /dev/*로 수정
+                # EBS를 직접 생성하면서 Attach하는 경우에 이런 경우가 있었던 것 같다.
+        if [[ "$mapping_device" != /dev/* ]]; then
+            mapping_device="/dev/${mapping_device}"
+        fi
+
+        # 매핑 디바이스 경로가 이미 존재하는 경우 스킵한다.
+        if [ -e $mapping_device ]; then
+            echo "path exists: ${mapping_device}"
+
+        # 경로가 존재하지 않으면 심볼릭 링크를 생성해준다.
+        else
+            echo "symlink created: ${nvme_block_device} to ${mapping_device}"
+            ln -s $nvme_block_device $mapping_device
+        fi
+    fi
+done
